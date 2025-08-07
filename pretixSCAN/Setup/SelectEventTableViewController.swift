@@ -25,6 +25,7 @@ class SelectEventTableViewController: UITableViewController, Configurable {
     }
 
     private var events: [Event]?
+    private var eventSettings: [Event: EventSettings]?
     private var subEvents: [Event: [SubEvent]]?
     var showingResetDevice: Bool = false
 
@@ -62,11 +63,12 @@ class SelectEventTableViewController: UITableViewController, Configurable {
         isLoading = true
         events = nil
         subEvents = [:]
+        eventSettings = [:]
 
         var subEventsLoading = 0
         hideEmptyMessage()
 
-        configStore?.ticketValidator?.getEvents { (eventList, error) in
+        configStore?.apiClient?.getEvents { (eventList, error) in
             self.presentErrorAlert(ifError: error)
             self.events = eventList
             if let events = self.events {
@@ -76,25 +78,36 @@ class SelectEventTableViewController: UITableViewController, Configurable {
                 }
                 subEventsLoading = events.count
                 for event in events {
-                    guard event.hasSubEvents else {
-                        subEventsLoading -= 1
-                        if subEventsLoading < 1 {
-                            self.isLoading = false
-                        }
-
-                        continue
-                    }
-
-                    self.configStore?.ticketValidator?.getSubEvents(event: event) { (subeventList, error) in
-                        subEventsLoading -= 1
+                    self.configStore?.apiClient?.getEventSettings(event: event) { (settings, error) in
                         self.presentErrorAlert(ifError: error)
+                        
+                        guard settings != nil else {
+                            self.isLoading = false
+                            return
+                        }
+                        
+                        self.eventSettings?[event] = settings
+                        
+                        guard event.hasSubEvents else {
+                            subEventsLoading -= 1
+                            if subEventsLoading < 1 {
+                                self.isLoading = false
+                            }
 
-                        if let subeventList = subeventList {
-                            self.subEvents?[event] = subeventList
+                            return
                         }
 
-                        if subEventsLoading < 1 {
-                            self.isLoading = false
+                        self.configStore?.apiClient?.getSubEvents(event: event) { (subeventList, error) in
+                            subEventsLoading -= 1
+                            self.presentErrorAlert(ifError: error)
+
+                            if let subeventList = subeventList {
+                                self.subEvents?[event] = subeventList
+                            }
+
+                            if subEventsLoading < 1 {
+                                self.isLoading = false
+                            }
                         }
                     }
                 }
@@ -146,6 +159,14 @@ class SelectEventTableViewController: UITableViewController, Configurable {
         return events[indexPath.section]
     }
 
+    private func eventSettings(for indexPath: IndexPath) -> EventSettings? {
+        guard let events = events else { return nil }
+        guard events.count > indexPath.section else { return nil }
+        let event = events[indexPath.section]
+
+        return eventSettings?[event]
+    }
+
     private func subEvent(for indexPath: IndexPath) -> SubEvent? {
         guard let events = events else { return nil }
         guard events.count > indexPath.section else { return nil }
@@ -162,8 +183,10 @@ class SelectEventTableViewController: UITableViewController, Configurable {
             let selectedIndexPath = tableView.indexPath(for: selectedCell) {
 
             let selectedEvent = event(for: selectedIndexPath)
+            let selectedEventSettings = eventSettings(for: selectedIndexPath)
             let selectedSubEvent = subEvent(for: selectedIndexPath)
             selectCheckInListViewController.event = selectedEvent
+            selectCheckInListViewController.eventSettings = selectedEventSettings
             selectCheckInListViewController.subEvent = selectedSubEvent
         }
     }

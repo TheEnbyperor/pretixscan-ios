@@ -27,9 +27,10 @@ public class DefaultsConfigStore: ConfigStore {
         case securityProfile
         case deviceUniqueSerial
         case event
+        case eventSettings
         case checkInList
         case allManagedEvents
-        case asyncModeEnabled
+        case operationMode
         case scanMode
         case shouldPlaySounds
         case useDeviceCamera
@@ -97,20 +98,22 @@ public class DefaultsConfigStore: ConfigStore {
     }
 
     public var ticketValidator: TicketValidator? {
-        if !_asyncModeEnabled {
-            // Online Mode
+        switch _operationMode {
+        case .online:
             _onlineTicketValidator = _onlineTicketValidator ?? OnlineTicketValidator(configStore: self)
             return _onlineTicketValidator
-        } else {
-            // Ofline mode
+        case .offline:
             _offlineTicketValidator = _offlineTicketValidator ?? OfflineTicketValidator(configStore: self)
             return _offlineTicketValidator
+        case .uic:
+            _uicTicketValidator = _uicTicketValidator ?? UICTicketValidator(configStore: self)
+            return _uicTicketValidator
         }
     }
     
     public var feedbackGenerator: FeedbackGenerator {
         return _feedbackGenerator
-            .setMode(_asyncModeEnabled ? FeedbackMode.offline : FeedbackMode.online)
+            .setMode(_operationMode == .online ? FeedbackMode.offline : FeedbackMode.online)
             .setPlaySounds(shouldPlaySounds)
     }
 
@@ -180,6 +183,14 @@ public class DefaultsConfigStore: ConfigStore {
         }
     }
 
+    public private(set) var eventSettings: EventSettings? {
+        get { return _eventSettings }
+        set {
+            _eventSettings = newValue
+            valueChanged(.eventSettings)
+        }
+    }
+
     public private(set) var checkInList: CheckInList? {
         get { return _checkInList }
         set {
@@ -188,13 +199,21 @@ public class DefaultsConfigStore: ConfigStore {
         }
     }
 
-    public func set(event: Event, checkInList: CheckInList) {
+    public func set(event: Event, eventSettings: EventSettings, checkInList: CheckInList) {
         if !allManagedEvents.contains(event) {
             self.allManagedEvents.append(event)
         }
 
         self.event = event
+        self.eventSettings = eventSettings
         self.checkInList = checkInList
+        if eventSettings.scan_uic_barcode {
+            self.operationMode = .uic
+        }
+        
+        _onlineTicketValidator = nil
+        _offlineTicketValidator = nil
+        _uicTicketValidator = nil
         
         saveToDefaults()
 
@@ -216,13 +235,13 @@ public class DefaultsConfigStore: ConfigStore {
         }
     }
 
-    public var asyncModeEnabled: Bool {
+    public var operationMode: OperationMode {
         get {
-            return _asyncModeEnabled
+            return _operationMode
         }
         set {
-            _asyncModeEnabled = newValue
-            valueChanged(.asyncModeEnabled)
+            _operationMode = newValue
+            valueChanged(.operationMode)
         }
     }
 
@@ -278,6 +297,7 @@ public class DefaultsConfigStore: ConfigStore {
     private var _apiClient: APIClient?
     private var _offlineTicketValidator: OfflineTicketValidator?
     private var _onlineTicketValidator: OnlineTicketValidator?
+    private var _uicTicketValidator: UICTicketValidator?
     private var _syncManager: SyncManager?
     private var _feedbackGenerator: FeedbackGenerator = ScanFeedbackGenerator()
     private var _dataStore: DataStore?
@@ -288,9 +308,10 @@ public class DefaultsConfigStore: ConfigStore {
     private var _deviceUniqueSerial: String?
     private var _scanMode: String = "entry"
     private var _event: Event?
+    private var _eventSettings: EventSettings?
     private var _checkInList: CheckInList?
     private var _allManagedEvents: [Event] = []
-    private var _asyncModeEnabled: Bool = false
+    private var _operationMode: OperationMode = .online
     private var _shouldAutoSync: Bool = true
     private var _enableSearch: Bool = true
     private var _publishedVersion: String? = nil
@@ -339,9 +360,10 @@ public class DefaultsConfigStore: ConfigStore {
         _deviceUniqueSerial = nil
         _scanMode = "entry"
         _event = nil
+        _eventSettings = nil
         _checkInList = nil
         _allManagedEvents = []
-        _asyncModeEnabled = false
+        _operationMode = .online
         _shouldAutoSync = true
         _publishedVersion = nil
         _enableSearch = true
@@ -390,7 +412,7 @@ private extension DefaultsConfigStore {
             Keys.preferFrontCamera.rawValue: false,
             Keys.shouldDownloadOrders.rawValue: true,
             Keys.scanMode.rawValue: "entry",
-            Keys.asyncModeEnabled.rawValue: false])
+            Keys.operationMode.rawValue: "online"])
     }
 
     private func loadFromDefaults() {
@@ -403,7 +425,7 @@ private extension DefaultsConfigStore {
         _securityProfile = PXSecurityProfile(rawValue: defaults.string(forKey: key(.securityProfile)))
         _deviceUniqueSerial = defaults.string(forKey: key(.deviceUniqueSerial))
         _scanMode = defaults.string(forKey: key(.scanMode)) ?? "entry"
-        _asyncModeEnabled = defaults.bool(forKey: key(.asyncModeEnabled))
+        _operationMode = OperationMode(rawValue:defaults.string(forKey: key(.operationMode)) ?? "online") ?? .online
         shouldPlaySounds = defaults.bool(forKey: key(.shouldPlaySounds))
         useDeviceCamera = defaults.value(forKey: key(.useDeviceCamera)) as? Bool ?? true
         preferFrontCamera = defaults.value(forKey: key(.preferFrontCamera)) as? Bool ?? false
@@ -418,6 +440,10 @@ private extension DefaultsConfigStore {
         // Event
         if let eventData = defaults.data(forKey: key(.event)) {
             _event = try? jsonDecoder.decode(Event.self, from: eventData)
+        }
+        
+        if let eventSettingsData = defaults.data(forKey: key(.eventSettings)) {
+            _eventSettings = try? jsonDecoder.decode(EventSettings.self, from: eventSettingsData)
         }
 
         if let allManagedEventsData = defaults.data(forKey: key(.allManagedEvents)) {
@@ -452,9 +478,10 @@ private extension DefaultsConfigStore {
         save(_securityProfile.rawValue, forKey: .securityProfile)
         save(_scanMode, forKey: .scanMode)
         save(_deviceUniqueSerial, forKey: .deviceUniqueSerial)
-        save(_asyncModeEnabled, forKey: .asyncModeEnabled)
+        save(_operationMode.rawValue, forKey: .operationMode)
         save(_shouldAutoSync, forKey: .shouldAutoSync)
         save(try? jsonEncoder.encode(_event), forKey: .event)
+        save(try? jsonEncoder.encode(_eventSettings), forKey: .eventSettings)
         save(try? jsonEncoder.encode(_checkInList), forKey: .checkInList)
         save(try? jsonEncoder.encode(_allManagedEvents), forKey: .allManagedEvents)
         save(_publishedVersion, forKey: .publishedSoftwareVersion)

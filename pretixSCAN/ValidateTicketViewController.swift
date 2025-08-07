@@ -100,7 +100,7 @@ extension ValidateTicketViewController: AppCoordinator {
         return configStore
     }
     
-    func redeem(secret: String, force: Bool, ignoreUnpaid: Bool) {
+    func redeem(secret: Data, force: Bool, ignoreUnpaid: Bool) {
         if presentedViewController != nil && presentedViewController is UISearchController == false {
             print("ticket status is currently being shown, we can't scan a code")
             return
@@ -112,7 +112,7 @@ extension ValidateTicketViewController: AppCoordinator {
         showStatusAndRedeem(secret, force, ignoreUnpaid)
     }
     
-    func showStatusAndRedeem(_ secret: String, _ force: Bool, _ ignoreUnpaid: Bool) {
+    func showStatusAndRedeem(_ secret: Data, _ force: Bool, _ ignoreUnpaid: Bool) {
         let statusController = TicketStatusController()
         statusController.configuration = TicketStatusConfiguration(secret: secret, force: force, ignoreUnpaid: ignoreUnpaid, answers: nil)
         
@@ -219,7 +219,8 @@ extension ValidateTicketViewController: UIKeyInput {
             let code = self.keyboardBuffer
             self.keyboardBuffer = ""
             print("Redeeming ticket from keyboard: \(code)")
-            self.redeem(secret: code, force: false, ignoreUnpaid: false)
+            guard let data = code.data(using: .utf8) else { return }
+            self.redeem(secret: data, force: false, ignoreUnpaid: false)
         } else {
             self.keyboardBuffer.append(text)
         }

@@ -39,10 +39,8 @@ public protocol ConfigStore: AnyObject {
     /// The base URL for the API
     var apiBaseURL: URL? { get set }
 
-    /// If `true`, the app will use a local cache to redeem tickets. Will access the internet each time otherwise.
-    ///
-    /// Updates the `ticketValidator` property.
-    var asyncModeEnabled: Bool { get set }
+    /// How will the tickets be validated, e.g. online or offline
+    var operationMode: OperationMode { get set }
 
     /// If `true` the app will schedule a new sync process a few minutes after the previous one completed.
     var shouldAutoSync: Bool { get set }
@@ -90,6 +88,8 @@ public protocol ConfigStore: AnyObject {
     // MARK: - Current Event and Check-In List
     /// The currently managed event
     var event: Event? { get }
+    
+    var eventSettings: EventSettings? { get }
 
     /// All Events that are synced into a local database
     var allManagedEvents: [Event] { get }
@@ -107,7 +107,7 @@ public protocol ConfigStore: AnyObject {
     var deviceKnownGateName: String? {get set}
 
     /// Set both event and checkinlist
-    func set(event: Event, checkInList: CheckInList)
+    func set(event: Event, eventSettings: EventSettings, checkInList: CheckInList)
     
     func applySecurityDefaults()
     
@@ -129,6 +129,8 @@ public enum ConfigStoreValue: String {
 
     /// The event has changed
     case event
+    
+    case eventSettings
 
     /// The value for allManagedEvents has changed
     case allManagedEvents
@@ -136,8 +138,8 @@ public enum ConfigStoreValue: String {
     /// The checkin list has changed
     case checkInList
 
-    /// Async Mode has been toggled
-    case asyncModeEnabled
+    /// Online/offline mode chanced
+    case operationMode
 
     /// Should auto sync has been toggled
     case shouldAutoSync
@@ -153,4 +155,10 @@ public enum ConfigStoreValue: String {
     case useDeviceCamera
     
     case preferFrontCamera
+}
+
+public enum OperationMode: String {
+    case online
+    case offline
+    case uic
 }

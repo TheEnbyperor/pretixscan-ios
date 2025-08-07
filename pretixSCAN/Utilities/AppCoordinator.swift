@@ -13,7 +13,7 @@ import UIKit
 /// One Class, ValidateTicketViewController, is implementing the appcoordinator protocol.
 protocol AppCoordinator {
     func getConfigStore() -> ConfigStore
-    func redeem(secret: String, force: Bool, ignoreUnpaid: Bool)
+    func redeem(secret: Data, force: Bool, ignoreUnpaid: Bool)
 }
 
 /// Classes that are marked as appCoordinatorReceiver will get their appcoordinator

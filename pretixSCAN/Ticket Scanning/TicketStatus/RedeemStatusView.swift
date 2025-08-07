@@ -29,5 +29,5 @@ struct RedeemStatusView: View {
 }
 
 #Preview {
-    RedeemStatusView(viewModel: .init(configuration: .init(secret: "", force: false, ignoreUnpaid: false)))
+    RedeemStatusView(viewModel: .init(configuration: .init(secret: Data(), force: false, ignoreUnpaid: false)))
 }

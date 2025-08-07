@@ -13,9 +13,9 @@ class CheckInListsDownloader: ConditionalDownloader<CheckInList> {
     var configStore: ConfigStore?
 
     override func handle(data: [CheckInList]) {
-        guard let currentEvent = configStore?.event, let currentCheckInList = configStore?.checkInList else { return }
+        guard let currentEvent = configStore?.event, let currentEventSettings = configStore?.eventSettings, let currentCheckInList = configStore?.checkInList else { return }
         for checkInList in data where checkInList == currentCheckInList {
-            configStore?.set(event: currentEvent, checkInList: checkInList)
+            configStore?.set(event: currentEvent, eventSettings: currentEventSettings, checkInList: checkInList)
         }
     }
 }

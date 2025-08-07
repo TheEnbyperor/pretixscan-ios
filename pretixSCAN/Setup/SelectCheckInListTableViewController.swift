@@ -11,6 +11,7 @@ import UIKit
 class SelectCheckInListTableViewController: UITableViewController, Configurable {
     var configStore: ConfigStore?
     var event: Event?
+    var eventSettings: EventSettings?
     var subEvent: SubEvent?
 
     private var isLoading = true {
@@ -43,7 +44,7 @@ class SelectCheckInListTableViewController: UITableViewController, Configurable 
         isLoading = true
         guard let event = event else { return }
 
-        configStore?.ticketValidator?.getCheckinLists(event: event) { (checkInLists, error) in
+        configStore?.apiClient?.getCheckinLists(event: event) { (checkInLists, error) in
             self.presentErrorAlert(ifError: error)
 
             if let subEvent = self.subEvent {
@@ -86,8 +87,8 @@ class SelectCheckInListTableViewController: UITableViewController, Configurable 
     // MARK: View Communication
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let selectedCell = sender as? UITableViewCell, let selectedIndexPath = tableView.indexPath(for: selectedCell),
-            let selectedCheckInList = checkInList(for: selectedIndexPath), let event = self.event {
-            configStore?.set(event: event, checkInList: selectedCheckInList)
+           let selectedCheckInList = checkInList(for: selectedIndexPath), let event = self.event, let eventSettings = self.eventSettings {
+            configStore?.set(event: event, eventSettings: eventSettings, checkInList: selectedCheckInList)
         }
     }
 }

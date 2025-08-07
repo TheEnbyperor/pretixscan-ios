@@ -123,6 +123,7 @@ struct Localization {
         static let SyncModeExplanation = NSLocalizedString("In online mode, the app will confirm any check-ins in real-time with the server. In offline mode, the app will work locally and only synchronize it's data with the server every couple of minutes. When working with multiple devices, this can potentially mean that a ticket can be used multiple times. Choose offline mode if you have an unreliable internet connection but can tolerate such situations.", comment: "")
         static let SyncModeOnline = NSLocalizedString("Online", comment: "")
         static let SyncModeOffline = NSLocalizedString("Offline", comment: "")
+        static let SyncModeUIC = NSLocalizedString("UIC Barcodes", comment: "")
         static let MITLicense = NSLocalizedString("MIT License", comment: "")
         static let DownloadOrders = NSLocalizedString("Download Orders", comment: "")
     }
@@ -130,6 +131,7 @@ struct Localization {
     struct NotificationManager {
         static let SyncModeOnline = NSLocalizedString("Sync Mode Switched to Online", comment: "")
         static let SyncModeOffline = NSLocalizedString("Sync Mode Switched to Offline", comment: "")
+        static let SyncModeUIC = NSLocalizedString("Sync Mode Switched to UIC Barcodes", comment: "")
         static let Reset = NSLocalizedString("All Contents and Settings were deleted", comment: "")
         static let ShouldAutoSyncOn = NSLocalizedString("Automatic Syncing is now enabled", comment: "")
         static let ShouldAutoSyncOff = NSLocalizedString("Automatic Syncing is now disabled", comment: "")

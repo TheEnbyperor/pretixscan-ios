@@ -70,6 +70,7 @@ final class PXSecurityProfileRequestValidator {
         "api-v1:device.info": #"(\/v1\/device\/info)$"#,
         "api-v1:event-list": #"(\/v1\/organizers\/)(.+?(?=\/))(\/events\/)$"#,
         "api-v1:event-detail": #"\/v1\/organizers\/.+?(?=\/)\/events\/([^\/\s]+\/)$"#,
+        "api-v1:event-settings": #"\/v1\/organizers\/.+?(?=\/)\/events\/([^\/\s]+\/)settings\/$"#,
         "api-v1:subevent-list": #"\/v1\/organizers\/.+?(?=\/)\/events\/([^\/\s]+\/)subevents\/$"#,
         "api-v1:subevent-detail": #"\/v1\/organizers\/.+?(?=\/)\/events\/([^\/\s]+\/)subevents\/([^\/\s]+\/)$"#,
         "api-v1:itemcategory-list": #"\/v1\/organizers\/.+?(?=\/)\/events\/([^\/\s]+\/)categories\/$"#,
@@ -92,6 +93,7 @@ final class PXSecurityProfileRequestValidator {
                                                                                     ("GET", "api-v1:device.info"),
                                                                                     ("GET", "api-v1:event-list"),
                                                                                     ("GET", "api-v1:event-detail"),
+                                                                                    ("GET", "api-v1:event-settings"),
                                                                                     ("GET", "api-v1:subevent-list"),
                                                                                     ("GET", "api-v1:subevent-detail"),
                                                                                     ("GET", "api-v1:itemcategory-list"),
@@ -112,6 +114,7 @@ final class PXSecurityProfileRequestValidator {
                                                                                       ("GET", "api-v1:device.info"),
                                                                                       ("GET", "api-v1:event-list"), // OK
                                                                                       ("GET", "api-v1:event-detail"), // OK, POST?
+                                                                                      ("GET", "api-v1:event-settings"), // OK, POST?
                                                                                       ("GET", "api-v1:subevent-list"), // OK
                                                                                       ("GET", "api-v1:subevent-detail"), // OK
                                                                                       ("GET", "api-v1:itemcategory-list"), // OK
@@ -133,6 +136,7 @@ final class PXSecurityProfileRequestValidator {
                                                                                      ("GET", "api-v1:device.info"),
                                                                                      ("GET", "api-v1:event-list"),
                                                                                      ("GET", "api-v1:event-detail"),
+                                                                                     ("GET", "api-v1:event-settings"),
                                                                                      ("GET", "api-v1:subevent-list"),
                                                                                      ("GET", "api-v1:subevent-detail"),
                                                                                      ("GET", "api-v1:itemcategory-list"),

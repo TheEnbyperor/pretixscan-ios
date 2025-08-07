@@ -61,7 +61,7 @@ class ConnectDeviceViewController: UIViewController, Configurable, SetupScannerV
             return
         }
 
-        let deviceInitializatioRequest = DeviceInitializationRequest.init(
+        let deviceInitializationRequest = DeviceInitializationRequest.init(
             token: token,
             hardwareBrand: "Apple",
             hardwareModel: UIDevice.current.modelName,
@@ -72,7 +72,7 @@ class ConnectDeviceViewController: UIViewController, Configurable, SetupScannerV
         showLoadingIndicator(over: view)
 
         configStore.apiBaseURL = url
-        configStore.ticketValidator?.initialize(deviceInitializatioRequest) { error in
+        configStore.apiClient?.initialize(deviceInitializationRequest) { error in
             self.presentErrorAlert(ifError: error)
 
             // API Client is correctly initialized

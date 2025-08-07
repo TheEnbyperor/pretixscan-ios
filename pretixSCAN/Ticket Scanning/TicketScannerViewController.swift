@@ -17,7 +17,7 @@ class TicketScannerViewController: ScannerViewController, AppCoordinatorReceiver
         super.viewDidLoad()
     }
     
-    override func found(code: String) {
+    override func found(code: Data) {
         appCoordinator?.redeem(secret: code, force: false, ignoreUnpaid: false)
     }
 }

@@ -23,22 +23,6 @@ public class OnlineTicketValidator: TicketValidator {
         self.configStore = configStore
     }
 
-    public func initialize(_ initializationRequest: DeviceInitializationRequest, completionHandler: @escaping (Error?) -> Void) {
-        configStore.apiClient?.initialize(initializationRequest, completionHandler: completionHandler)
-    }
-
-    public func getEvents(completionHandler: @escaping ([Event]?, Error?) -> Void) {
-        configStore.apiClient?.getEvents(completionHandler: completionHandler)
-    }
-
-    public func getSubEvents(event: Event, completionHandler: @escaping ([SubEvent]?, Error?) -> Void) {
-        configStore.apiClient?.getSubEvents(event: event, completionHandler: completionHandler)
-    }
-
-    public func getCheckinLists(event: Event, completionHandler: @escaping ([CheckInList]?, Error?) -> Void) {
-        configStore.apiClient?.getCheckinLists(event: event, completionHandler: completionHandler)
-    }
-
     public func getQuestions(for item: Item, event: Event, completionHandler: @escaping ([Question]?, Error?) -> Void) {
         guard let questions = configStore.dataStore?.getQuestions(for: item, in: event) else {
             completionHandler(nil, APIError.notFound)
@@ -101,14 +85,55 @@ public class OnlineTicketValidator: TicketValidator {
     }
     
     public func redeem(configuration: TicketStatusConfiguration, as type: String) async throws -> RedemptionResponse? {
-        return try await withCheckedThrowingContinuation { continuation in
-            redeem(secret: configuration.secret, force: configuration.force, ignoreUnpaid: configuration.ignoreUnpaid, answers: configuration.answers, as: type) {redemptionResponse, error in
-                
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: redemptionResponse)
+        try await withCheckedThrowingContinuation { continuation in
+            guard let secret = String(data: configuration.secret, encoding: .utf8) else {
+                continuation.resume(throwing: APIError.badRequest)
+                return
+            }
+            configStore.apiClient?.redeem(secret: secret, force: configuration.force, ignoreUnpaid: configuration.ignoreUnpaid,
+                                          answers: configuration.answers, as: type) { redemptionResponse, error in
+                guard var redemptionResponse = redemptionResponse else {
+                    continuation.resume(throwing: error!)
+                    return
                 }
+
+                guard let checkInList = self.configStore.checkInList else {
+                    continuation.resume(throwing: error!)
+                    return
+                }
+
+                guard var position = redemptionResponse.position else {
+                    continuation.resume(throwing: error!)
+                    return
+                }
+
+                guard let dataStore = self.configStore.dataStore else {
+                    EventLogger.log(event: "Could not retrieve datastore!", category: .configuration, level: .fatal, type: .error)
+                    continuation.resume(throwing: error!)
+                    return
+                }
+
+                if let event = self.configStore.event {
+                    position = position.adding(order: dataStore.getOrder(by: position.orderCode, in: event))
+                    position = position.adding(item: dataStore.getItem(by: position.itemIdentifier, in: event))
+
+                    let checkIns = dataStore.getCheckIns(for: position, in: self.configStore.checkInList, in: event)
+                    position = position.adding(checkIns: checkIns)
+
+                    redemptionResponse.position = position
+                }
+
+                redemptionResponse.lastCheckIn = redemptionResponse.position?.checkins.filter {
+                    $0.listID == checkInList.identifier
+                }.first
+
+                redemptionResponse = RedemptionResponse.appendDataFromOnlineQuestionsForStatusVisualization(redemptionResponse)
+                
+                if redemptionResponse == .redeemed {
+                    PXTemporaryFile.cleanUp(configuration.answers?.compactMap({$0.fileUrl}) ?? [])
+                }
+                
+                continuation.resume(returning: redemptionResponse)
             }
         }
     }
@@ -119,54 +144,11 @@ public class OnlineTicketValidator: TicketValidator {
     public func redeem(secret: String, force: Bool, ignoreUnpaid: Bool, answers: [Answer]? = nil,
                        as type: String,
                        completionHandler: @escaping (RedemptionResponse?, Error?) -> Void) {
-        configStore.apiClient?.redeem(secret: secret, force: force, ignoreUnpaid: ignoreUnpaid,
-                                      answers: answers, as: type) { redemptionResponse, error in
-            guard var redemptionResponse = redemptionResponse else {
-                completionHandler(nil, error)
-                return
-            }
-
-            guard let checkInList = self.configStore.checkInList else {
-                completionHandler(redemptionResponse, error)
-                return
-            }
-
-            guard var position = redemptionResponse.position else {
-                completionHandler(redemptionResponse, error)
-                return
-            }
-
-            guard let dataStore = self.configStore.dataStore else {
-                EventLogger.log(event: "Could not retrieve datastore!", category: .configuration, level: .fatal, type: .error)
-                completionHandler(redemptionResponse, error)
-                return
-            }
-
-            if let event = self.configStore.event {
-                position = position.adding(order: dataStore.getOrder(by: position.orderCode, in: event))
-                position = position.adding(item: dataStore.getItem(by: position.itemIdentifier, in: event))
-
-                let checkIns = dataStore.getCheckIns(for: position, in: self.configStore.checkInList, in: event)
-                position = position.adding(checkIns: checkIns)
-
-                redemptionResponse.position = position
-            }
-
-            redemptionResponse.lastCheckIn = redemptionResponse.position?.checkins.filter {
-                $0.listID == checkInList.identifier
-            }.first
-
-            redemptionResponse = RedemptionResponse.appendDataFromOnlineQuestionsForStatusVisualization(redemptionResponse)
-            
-            if redemptionResponse == .redeemed {
-                PXTemporaryFile.cleanUp(answers?.compactMap({$0.fileUrl}) ?? [])
-            }
-            
-            completionHandler(redemptionResponse, error)
-        }
+        
     }
 
     public func getCheckInListStatus(completionHandler: @escaping (CheckInListStatus?, Error?) -> Void) {
         configStore.apiClient?.getCheckInListStatus(completionHandler: completionHandler)
     }
 }
+

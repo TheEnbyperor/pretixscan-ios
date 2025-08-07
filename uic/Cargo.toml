@@ -1,0 +1,15 @@
+[package]
+name = "pretix-uic"
+version = "0.1.0"
+edition = "2024"
+authors = ["Q Misell <q@magicalcodewit.ch>"]
+publish = false
+
+[lib]
+name = "pretix_uic"
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+chrono = "0.4.41"
+uic-ticket = { path = "../../uic-ticket-rs" }
+num-traits = "0.2.19"

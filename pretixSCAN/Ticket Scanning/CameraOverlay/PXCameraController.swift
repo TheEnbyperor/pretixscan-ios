@@ -203,12 +203,30 @@ final class PXCameraController: UIViewController {
     
     private static func getCaptureDevice(useFrontCamera: Bool) -> AVCaptureDevice? {
         logger.debug("📸 getCaptureDevice, useFrontCamera: \(useFrontCamera)")
-        if !useFrontCamera {
-            return AVCaptureDevice.default(for: .video)
+        let device = if !useFrontCamera {
+            if let device = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
+               device
+            } else if let device = AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back) {
+               device
+            } else if let device = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back) {
+               device
+            } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+               device
+            } else {
+                AVCaptureDevice.default(for: .video)
+            }
+        } else {
+            // try to get a front-facing camera and if that's not possible, fallback to the default video camera.
+            AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) ?? AVCaptureDevice.default(for: .video)
         }
-        
-        // try to get a front-facing camera and if that's not possible, fallback to the default video camera.
-        return AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) ?? AVCaptureDevice.default(for: .video)
+        logger.debug("📸 got camera: \(device.debugDescription)")
+        do {
+            try device?.lockForConfiguration()
+            device?.focusMode = .continuousAutoFocus
+        } catch {
+            logger.warning("📸 failed to set camera focus mode: \(error.localizedDescription)")
+        }
+        return device
     }
 }
 

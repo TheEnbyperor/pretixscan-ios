@@ -20,7 +20,7 @@ class SettingsTableViewController: UITableViewController, Configurable {
     @IBOutlet weak var beginSyncingCell: UITableViewCell!
     @IBOutlet weak var forceSyncCell: UITableViewCell!
     @IBOutlet weak var resetContentCell: UITableViewCell!
-    @IBOutlet weak var offlineModeCell: SettingsTableViewExplanationCell!
+    @IBOutlet weak var operationModeCell: SettingsTableViewExplanationCell!
     @IBOutlet weak var playSoundsCell: UITableViewCell!
     @IBOutlet weak var useCameraCell: UITableViewCell!
     @IBOutlet weak var preferFrontCameraCell: UITableViewCell!
@@ -74,10 +74,18 @@ class SettingsTableViewController: UITableViewController, Configurable {
         
         resetContentCell.textLabel?.text = Localization.SettingsTableViewController.PerformFactoryReset
         
-        offlineModeCell.valueLabel?.text = configStore?.asyncModeEnabled == true ?
-        Localization.SettingsTableViewController.SyncModeOffline : Localization.SettingsTableViewController.SyncModeOnline
-        offlineModeCell.titleLabel?.text = Localization.SettingsTableViewController.SyncMode
-        offlineModeCell.explanationLabel.text = Localization.SettingsTableViewController.SyncModeExplanation
+        operationModeCell.valueLabel?.text = switch configStore?.operationMode {
+        case .online:
+            Localization.SettingsTableViewController.SyncModeOnline
+        case .offline:
+            Localization.SettingsTableViewController.SyncModeOffline
+        case .uic:
+            Localization.SettingsTableViewController.SyncModeUIC
+        case nil:
+            nil
+        };
+        operationModeCell.titleLabel?.text = Localization.SettingsTableViewController.SyncMode
+        operationModeCell.explanationLabel.text = Localization.SettingsTableViewController.SyncModeExplanation
         
         for (ix, library) in AppPackageLicenses.enumerated() {
             libraryLicenseCells[ix].textLabel?.text = library.name
@@ -102,8 +110,8 @@ class SettingsTableViewController: UITableViewController, Configurable {
             forceSync()
         } else if indexPath == tableView.indexPath(for: beginSyncingCell) {
             beginSyncing()
-        } else if indexPath == tableView.indexPath(for: offlineModeCell) {
-            toggleOfflineMode()
+        } else if indexPath == tableView.indexPath(for: operationModeCell) {
+            changeOperationMode()
         } else if indexPath == tableView.indexPath(for: resetContentCell) {
             configStoreFactoryReset()
         } else if let licenseCellIx = libraryLicenseCells.firstIndex(where: {indexPath == tableView.indexPath(for: $0)}) {
@@ -202,11 +210,19 @@ class SettingsTableViewController: UITableViewController, Configurable {
         configStore?.syncManager.forceSync()
     }
     
-    func toggleOfflineMode() {
+    func changeOperationMode() {
         if let configStore = configStore {
-            configStore.asyncModeEnabled = !(configStore.asyncModeEnabled)
-            offlineModeCell.valueLabel?.text = configStore.asyncModeEnabled ?
-            Localization.SettingsTableViewController.SyncModeOffline : Localization.SettingsTableViewController.SyncModeOnline
+            switch configStore.operationMode {
+            case .online:
+                configStore.operationMode = .offline
+                operationModeCell.valueLabel?.text = Localization.SettingsTableViewController.SyncModeOffline
+            case .offline:
+                configStore.operationMode = .uic
+                operationModeCell.valueLabel?.text = Localization.SettingsTableViewController.SyncModeUIC
+            case .uic:
+                configStore.operationMode = .online
+                operationModeCell.valueLabel?.text = Localization.SettingsTableViewController.SyncModeOnline
+            }
         }
     }
     

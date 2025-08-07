@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 final class RedeemTicketViewModel: ObservableObject {
-    private let secret: String
+    private let secret: Data
     private let forcedRedeem: Bool
     private var unpaidAreIgnored: Bool
     private var canAutoDismiss: Bool = true

@@ -52,7 +52,7 @@ class SearchResultsTableViewController: UITableViewController {
         let result = results[indexPath.row]
         dismiss(animated: true, completion: nil)
         if let secret = result.secret  {
-            appCoordinator?.redeem(secret: secret, force: false, ignoreUnpaid: false)
+            appCoordinator?.redeem(secret: secret.data(using: .utf8)!, force: false, ignoreUnpaid: false)
         }
     }
 }

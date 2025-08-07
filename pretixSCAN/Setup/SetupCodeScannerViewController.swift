@@ -20,10 +20,9 @@ class SetupCodeScannerViewController: ScannerViewController {
         shouldScan = true
     }
 
-    override func found(code: String) {
+    override func found(code: Data) {
         do {
-            guard let codeData = code.data(using: .utf8) else { return }
-            let handshake = try JSONDecoder.iso8601withFractionsDecoder.decode(Handshake.self, from: codeData)
+            let handshake = try JSONDecoder.iso8601withFractionsDecoder.decode(Handshake.self, from: code)
             delegate?.initialize(token: handshake.token, url: handshake.url)
             self.shouldScan = false
         } catch let error {

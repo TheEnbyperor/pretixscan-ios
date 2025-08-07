@@ -27,17 +27,20 @@ class NotificationManager {
         DispatchQueue.main.async {
             if let value = notification.userInfo?["value"] as? ConfigStoreValue {
 
-                if value == .asyncModeEnabled {
+                if value == .operationMode {
                     SwiftMessages.hideAll()
                     SwiftMessages.show {
                         let view = MessageView.viewFromNib(layout: .statusLine)
                         view.configureTheme(backgroundColor: PXColor.okay, foregroundColor: PXColor.primaryText)
                         view.layoutMarginAdditions = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
 
-                        if self.configStore.asyncModeEnabled {
-                            view.configureContent(body: Localization.NotificationManager.SyncModeOffline)
-                        } else {
+                        switch self.configStore.operationMode {
+                        case .online:
                             view.configureContent(body: Localization.NotificationManager.SyncModeOnline)
+                        case .offline:
+                            view.configureContent(body: Localization.NotificationManager.SyncModeOffline)
+                        case .uic:
+                            view.configureContent(body: Localization.NotificationManager.SyncModeUIC)
                         }
                         return view
                     }

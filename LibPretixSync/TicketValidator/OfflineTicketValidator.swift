@@ -21,26 +21,6 @@ public class OfflineTicketValidator: TicketValidator {
         self.configStore = configStore
     }
     
-    /// Initialize ConfigStore and APIClient with Device Keys
-    ///
-    /// Note: This always uses the API directly. Offline Mode is not supported.
-    public func initialize(_ initializationRequest: DeviceInitializationRequest, completionHandler: @escaping (Error?) -> Void) {
-        configStore.apiClient?.initialize(initializationRequest, completionHandler: completionHandler)
-    }
-    
-    // Retrieve all available Events for the current user
-    public func getEvents(completionHandler: @escaping ([Event]?, Error?) -> Void) {
-        configStore.apiClient?.getEvents(completionHandler: completionHandler)
-    }
-    
-    public func getSubEvents(event: Event, completionHandler: @escaping ([SubEvent]?, Error?) -> Void) {
-        configStore.apiClient?.getSubEvents(event: event, completionHandler: completionHandler)
-    }
-    
-    public func getCheckinLists(event: Event, completionHandler: @escaping ([CheckInList]?, Error?) -> Void) {
-        configStore.apiClient?.getCheckinLists(event: event, completionHandler: completionHandler)
-    }
-    
     public func getQuestions(for item: Item, event: Event, completionHandler: @escaping ([Question]?, Error?) -> Void) {
         guard let questions = configStore.dataStore?.getQuestions(for: item, in: event) else {
             completionHandler(nil, APIError.notFound)
@@ -134,45 +114,34 @@ public class OfflineTicketValidator: TicketValidator {
     
     public func redeem(configuration: TicketStatusConfiguration, as type: String) async throws -> RedemptionResponse? {
         return try await withCheckedThrowingContinuation { continuation in
-            redeem(secret: configuration.secret, force: configuration.force, ignoreUnpaid: configuration.ignoreUnpaid, answers: configuration.answers, as: type) {redemptionResponse, error in
+            guard let event = configStore.event else {
+                continuation.resume(throwing: APIError.notConfigured(message: "No Event is set"))
+                return
+            }
+            
+            guard let checkInList = configStore.checkInList else {
+                continuation.resume(throwing: APIError.notConfigured(message: "No CheckInList is set"))
+                return
+            }
+            
+            guard let secret = String(data: configuration.secret, encoding: .utf8) else {
+                continuation.resume(throwing: APIError.badRequest)
+                return
+            }
+            
+            redeem(checkInList, event, secret, force: configuration.force, ignoreUnpaid: configuration.ignoreUnpaid, answers: configuration.answers, as: type, completionHandler: {[weak self] (response, error) in
+                if let failedCheckIn = FailedCheckIn(response: response, error: error, event.slug, checkInList.identifier, type, secret, event) {
+                    logger.debug("Recording FailedCheckIn for upload, reason: \(failedCheckIn.errorReason)")
+                    self?.configStore.dataStore?.store([failedCheckIn], for: event)
+                }
                 
                 if let error = error {
                     continuation.resume(throwing: error)
                 } else {
-                    continuation.resume(returning: redemptionResponse)
+                    continuation.resume(returning: response)
                 }
-            }
+            })
         }
-    }
-    
-    
-    /// Check in an attendee, identified by OrderPosition, into the currently configured CheckInList
-    ///
-    /// - See `RedemptionResponse` for the response returned in the completion handler.
-    public func redeem(secret: String, force: Bool, ignoreUnpaid: Bool, answers: [Answer]?,
-                       as type: String,
-                       completionHandler: @escaping (RedemptionResponse?, Error?) -> Void) {
-        
-        guard let event = configStore.event else {
-            completionHandler(nil, APIError.notConfigured(message: "No Event is set"))
-            return
-        }
-        
-        guard let checkInList = configStore.checkInList else {
-            completionHandler(nil, APIError.notConfigured(message: "No CheckInList is set"))
-            return
-        }
-        
-        
-        redeem(checkInList, event, secret, force: force, ignoreUnpaid: ignoreUnpaid, answers: answers, as: type, completionHandler: {[weak self] (response, error) in
-            
-            if let failedCheckIn = FailedCheckIn(response: response, error: error, event.slug, checkInList.identifier, type, secret, event) {
-                logger.debug("Recording FailedCheckIn for upload, reason: \(failedCheckIn.errorReason)")
-                self?.configStore.dataStore?.store([failedCheckIn], for: event)
-            }
-            
-            completionHandler(response, error)
-        })
     }
     
     func redeem(_ checkInList: CheckInList, _ event: Event, _ secret: String, force: Bool, ignoreUnpaid: Bool, answers: [Answer]?,

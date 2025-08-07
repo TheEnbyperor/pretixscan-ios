@@ -99,7 +99,6 @@ public extension APIClient {
             // setup the configuration store and apply security defaults
             self.configStore.updateAndApplyCredentials(deviceInit: initializationResponse)
             
-            
             completionHandler(nil)
         }
         
@@ -420,6 +419,23 @@ public extension APIClient {
             }
         }, pageLimit: 5)
         task?.resume()
+    }
+    
+    func getEventSettings(event: Event, completionHandler: @escaping (EventSettings?, Error?) -> Void) {
+        do {
+            let organizer = try getOrganizerSlug()
+            let task = getTask("organizers/\(organizer)/events/\(event.slug)/settings/", completionHandler: { (result: Result<EventSettings, Error>) in
+                switch result {
+                case .failure(let error):
+                    completionHandler(nil, error)
+                case .success(let eventSettings):
+                    completionHandler(eventSettings, nil)
+                }
+            })
+            task?.resume()
+        } catch {
+            completionHandler(nil, error)
+        }
     }
     
     /// Returns a list of all subevents in the completionHandler
@@ -947,3 +963,4 @@ private extension APIClient {
         }
     }
 }
+

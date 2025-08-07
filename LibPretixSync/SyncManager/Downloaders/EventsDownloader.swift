@@ -13,9 +13,9 @@ class EventsDownloader: FullDownloader<Event> {
     var configStore: ConfigStore?
 
     override func handle(data: [Event]) {
-        guard let currentEvent = configStore?.event, let currentCheckInList = configStore?.checkInList else { return }
+        guard let currentEvent = configStore?.event, let currentEventSettings = configStore?.eventSettings, let currentCheckInList = configStore?.checkInList else { return }
         for event in data where event == currentEvent {
-            configStore?.set(event: event, checkInList: currentCheckInList)
+            configStore?.set(event: event, eventSettings: currentEventSettings, checkInList: currentCheckInList)
         }
     }
 }

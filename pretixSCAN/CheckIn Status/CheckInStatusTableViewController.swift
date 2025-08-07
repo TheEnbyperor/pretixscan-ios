@@ -76,7 +76,7 @@ class CheckInStatusTableViewController: UITableViewController, Configurable {
         switch section {
 
         case .overview:
-            if configStore?.asyncModeEnabled ?? true || checkInListStatus?.insideCount == -1 {
+            if configStore?.operationMode ?? .online == .online || checkInListStatus?.insideCount == -1 {
                 // online mode
                 let cell = tableView.dequeueReusableCell(
                     withIdentifier: CheckInStatusOverviewTableViewCell.reuseIdentifier,

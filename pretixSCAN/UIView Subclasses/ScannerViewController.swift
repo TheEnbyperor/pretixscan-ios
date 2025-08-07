@@ -77,7 +77,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
             captureSession.addOutput(metadataOutput)
             
             metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.qr, .pdf417]
+            metadataOutput.metadataObjectTypes = [.qr, .pdf417, .aztec]
         } else {
             failed()
             return
@@ -214,9 +214,9 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         lastFoundAt = Date()
         guard let metadataObject = metadataObjects.first else { return }
         guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
-        guard let stringValue = readableObject.stringValue else { return }
+        guard let bytesValue = readableObject.binaryValue else { return }
         
-        found(code: stringValue)
+        found(code: bytesValue)
     }
     
     /// Toggle the Flashlight on and off if possible
@@ -246,8 +246,8 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
     }
     
     // Override this method in yuor subclass
-    func found(code: String) {
-        print(code)
+    func found(code: Data) {
+        print(code.map { String(format: "%02x", $0) }.joined())
     }
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
@@ -322,13 +322,30 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
     
     private static func getCaptureDevice(useFrontCamera: Bool) -> AVCaptureDevice? {
         logger.debug("📸 getCaptureDevice, useFrontCamera: \(useFrontCamera)")
-        if !useFrontCamera {
-            return AVCaptureDevice.default(for: .video)
+        let device = if !useFrontCamera {
+            if let device = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
+               device
+            } else if let device = AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back) {
+               device
+            } else if let device = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back) {
+               device
+            } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+               device
+            } else {
+                AVCaptureDevice.default(for: .video)
+            }
+        } else {
+            // try to get a front-facing camera and if that's not possible, fallback to the default video camera.
+            AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) ?? AVCaptureDevice.default(for: .video)
         }
-        
-        // try to get a front-facing camera and if that's not possible, fallback to the default video camera.
-        return AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) ?? AVCaptureDevice.default(for: .video)
+        logger.debug("📸 got camera: \(device.debugDescription)")
+        do {
+            try device?.lockForConfiguration()
+            device?.focusMode = .continuousAutoFocus
+        } catch {
+            logger.warning("📸 failed to set camera focus mode: \(error.localizedDescription)")
+        }
+        return device
     }
 }
-
 

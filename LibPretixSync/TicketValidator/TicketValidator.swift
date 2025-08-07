@@ -10,20 +10,6 @@ import Foundation
 
 /// Exposes methods to check the validity of tickets and show event status.
 public protocol TicketValidator {
-    // MARK: - Initialization
-    /// Initialize ConfigStore and APIClient with Device Keys
-    func initialize(_ initializationRequest: DeviceInitializationRequest, completionHandler: @escaping (Error?) -> Void)
-
-    // MARK: - Check-In Lists and Events
-    /// Retrieve all available Events for the given user
-    func getEvents(completionHandler: @escaping ([Event]?, Error?) -> Void)
-
-    /// Retrieve all available Sub Events for the given event
-    func getSubEvents(event: Event, completionHandler: @escaping ([SubEvent]?, Error?) -> Void)
-
-    /// Retrieve all available CheckInLists for the current event
-    func getCheckinLists(event: Event, completionHandler: @escaping ([CheckInList]?, Error?) -> Void)
-
     /// Retrieve Statistics for the currently selected CheckInList
     func getCheckInListStatus(completionHandler: @escaping (CheckInListStatus?, Error?) -> Void)
 
@@ -35,14 +21,6 @@ public protocol TicketValidator {
     func search(query: String, _ locale: Locale) async throws -> [SearchResult]
 
     // MARK: - Redemption
-    /// Check in an attendee, identified by their secret, into the currently configured CheckInList
-    ///
-    /// - See `RedemptionResponse` for the response returned in the completion handler.
-    @available(*, renamed: "redeem()")
-    func redeem(secret: String, force: Bool, ignoreUnpaid: Bool, answers: [Answer]?,
-                as type: String,
-                completionHandler: @escaping (RedemptionResponse?, Error?) -> Void)
-    
     /// Attempt to check in the ticket
     func redeem(configuration: TicketStatusConfiguration, as type: String) async throws -> RedemptionResponse?
     

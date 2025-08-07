@@ -9,7 +9,7 @@
 import Foundation
 
 public struct TicketStatusConfiguration: Hashable, Equatable {
-    var secret: String
+    var secret: Data
     var force: Bool
     var ignoreUnpaid: Bool
     var answers: [Answer]?
