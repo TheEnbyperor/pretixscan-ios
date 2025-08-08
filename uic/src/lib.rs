@@ -129,7 +129,7 @@ fn do_scan(instance: &PretixUIC, data: &[u8], scan_config: &ScanConfig) -> ScanR
         return ScanResult::empty(ScanResultType::Invalid);
     }
 
-    let pretix_record = match ticket {
+    let pretix_record = match match &ticket {
         uic_ticket::Ticket::UicTlbTicket(ticket) => {
             println!("UIC TLB ticket signed by RICS {} with key ID {}", ticket.security_provider_rics, ticket.security_provider_key_id);
 
@@ -137,7 +137,7 @@ fn do_scan(instance: &PretixUIC, data: &[u8], scan_config: &ScanConfig) -> ScanR
                 Some(p)
             } else {
                 None
-            }).next().cloned()
+            }).next()
         },
         uic_ticket::Ticket::UicDosipasTicket(ticket) => {
             println!("UIC Dosipas ticket signed by RICS {} with key ID {}", ticket.security_provider, ticket.key_id);
@@ -155,15 +155,13 @@ fn do_scan(instance: &PretixUIC, data: &[u8], scan_config: &ScanConfig) -> ScanR
                 Some(p)
             } else {
                 None
-            }).next().cloned()
+            }).next()
         },
         _ => {
             println!("Unknown UIC ticket type: {:?}", ticket);
             return ScanResult::empty(ScanResultType::Invalid);
         }
-    };
-
-    let pretix_record = match pretix_record {
+    } {
         Some(pretix_record) => pretix_record,
         None => {
             println!("UIC Pretix record missing");
@@ -171,12 +169,29 @@ fn do_scan(instance: &PretixUIC, data: &[u8], scan_config: &ScanConfig) -> ScanR
         }
     };
 
+    let pretix_totp = match &ticket {
+        uic_ticket::Ticket::UicDosipasTicket(ticket) => {
+            ticket.level2_data.as_ref().and_then(|r| if let uic_ticket::dosipas::Level2Data::PretixTotp(p) = r {
+                Some(p)
+            } else {
+                None
+            })
+        },
+        _ => None
+    };
+
     println!("UIC Pretix record: {:#?}", pretix_record);
+    println!("UIC Pretix TOTP record: {:#?}", pretix_totp);
+
+    if pretix_record.has_totp && pretix_totp.is_none() {
+        println!("Pretix data indicates a TOTP should be present, but it isn't");
+        return ScanResult::empty(ScanResultType::Invalid);
+    }
 
     let event_slug = unsafe { std::ffi::CStr::from_ptr(scan_config.event_slug).to_string_lossy() };
     let item_id = pretix_record.item_id.to_i64().unwrap();
-    let sub_event_id = pretix_record.subevent_id.map(|id| id.to_i64().unwrap());
-    let variation_id = pretix_record.variation_id.map(|id| id.to_i64().unwrap());
+    let sub_event_id = pretix_record.subevent_id.as_ref().map(|id| id.to_i64().unwrap());
+    let variation_id = pretix_record.variation_id.as_ref().map(|id| id.to_i64().unwrap());
 
     if event_slug != str::from_utf8(pretix_record.event_slug.as_iso646_bytes()).unwrap() {
         println!("UIC ticket event ID mismatch");

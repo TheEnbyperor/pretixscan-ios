@@ -18,10 +18,10 @@
 		08FF5FB827A7D86600130F41 /* PXSecurityProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FF5FB727A7D86600130F41 /* PXSecurityProfile.swift */; };
 		08FF5FBA27A7DB3500130F41 /* PXSecurityProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FF5FB927A7DB3500130F41 /* PXSecurityProfileTests.swift */; };
 		08FF5FBC27A7E2A800130F41 /* PXSecurityProfileRequestValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FF5FBB27A7E2A800130F41 /* PXSecurityProfileRequestValidator.swift */; };
+		102155932E45635F0035C06D /* libpretix_uic.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 10DF55922E2808EE008590A3 /* libpretix_uic.a */; };
 		1072EDAA2E27D48200717D56 /* EventSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EDA92E27D48200717D56 /* EventSettings.swift */; };
 		10DF558E2E27FD89008590A3 /* UICTicketValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DF558D2E27FD84008590A3 /* UICTicketValidator.swift */; };
 		10DF55902E28008F008590A3 /* AVMetadataMachineReadableCodeObjectBinary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DF558F2E280071008590A3 /* AVMetadataMachineReadableCodeObjectBinary.swift */; };
-		10DF55962E280C29008590A3 /* libpretix_uic.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 10DF55922E2808EE008590A3 /* libpretix_uic.a */; };
 		10DF55972E280C39008590A3 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 10DF55952E280AE9008590A3 /* libresolv.tbd */; };
 		641B4D2222CE641500162D1C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 641B4D2422CE641500162D1C /* Localizable.strings */; };
 		AAC693F829B0F7A500362F47 /* attention.m4a in Resources */ = {isa = PBXBuildFile; fileRef = AAC693F729B0F7A500362F47 /* attention.m4a */; };
@@ -317,6 +317,7 @@
 		08FF5FB727A7D86600130F41 /* PXSecurityProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PXSecurityProfile.swift; sourceTree = "<group>"; };
 		08FF5FB927A7DB3500130F41 /* PXSecurityProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PXSecurityProfileTests.swift; sourceTree = "<group>"; };
 		08FF5FBB27A7E2A800130F41 /* PXSecurityProfileRequestValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PXSecurityProfileRequestValidator.swift; sourceTree = "<group>"; };
+		1021558D2E4560780035C06D /* libpretix_uic.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpretix_uic.a; path = "uic/target/aarch64-apple-ios/release/libpretix_uic.a"; sourceTree = "<group>"; };
 		1072EDA92E27D48200717D56 /* EventSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSettings.swift; sourceTree = "<group>"; };
 		10DF558D2E27FD84008590A3 /* UICTicketValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UICTicketValidator.swift; sourceTree = "<group>"; };
 		10DF558F2E280071008590A3 /* AVMetadataMachineReadableCodeObjectBinary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVMetadataMachineReadableCodeObjectBinary.swift; sourceTree = "<group>"; };
@@ -614,9 +615,9 @@
 				08728E7C27A534B9002379A6 /* FMDB in Frameworks */,
 				B5203DB227158C2B00AAA417 /* SwiftProtobufPluginLibrary in Frameworks */,
 				B50945B528054C8500E8AFC0 /* SwiftyJSON in Frameworks */,
-				10DF55962E280C29008590A3 /* libpretix_uic.a in Frameworks */,
 				B5203DB027158C2B00AAA417 /* SwiftProtobuf in Frameworks */,
 				B5C0B61828018C740089DCDB /* jsonlogic in Frameworks */,
+				102155932E45635F0035C06D /* libpretix_uic.a in Frameworks */,
 				B5884B4C2C4E4A0500A0FD95 /* Sentry-Dynamic in Frameworks */,
 				10DF55972E280C39008590A3 /* libresolv.tbd in Frameworks */,
 				08728E7927A53459002379A6 /* SwiftMessages in Frameworks */,
@@ -648,6 +649,7 @@
 		10DF55912E2808ED008590A3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1021558D2E4560780035C06D /* libpretix_uic.a */,
 				10DF55952E280AE9008590A3 /* libresolv.tbd */,
 				10DF55922E2808EE008590A3 /* libpretix_uic.a */,
 			);
@@ -1877,7 +1879,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_TEAM = MQ9TN9772U;
 				INFOPLIST_FILE = PretixScan/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1888,8 +1890,9 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/uic/target/universal/release",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)/uic/target/universal/release";
-				MARKETING_VERSION = 1.25.0;
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=arm64]" = "$(PROJECT_DIR)/uic/target/universal/release";
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=arm64]" = "$(PROJECT_DIR)/uic/target/aarch64-apple-ios-sim/release";
+				MARKETING_VERSION = 1.26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "net.as207960.pretix.scan-uic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1906,7 +1909,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_TEAM = MQ9TN9772U;
 				INFOPLIST_FILE = PretixScan/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1917,8 +1920,9 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/uic/target/universal/release",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)/uic/target/universal/release";
-				MARKETING_VERSION = 1.25.0;
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=arm64]" = "$(PROJECT_DIR)/uic/target/universal/release";
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=arm64]" = "$(PROJECT_DIR)/uic/target/aarch64-apple-ios-sim/release";
+				MARKETING_VERSION = 1.26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "net.as207960.pretix.scan-uic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

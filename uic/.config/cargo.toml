@@ -1,2 +1,5 @@
 [env]
 BOTAN_INCLUDE_DIR = { value = "Botan-3.8.1/iphone-64/include", relative = true }
+
+[build]
+target = "aarch64-apple-ios" 
